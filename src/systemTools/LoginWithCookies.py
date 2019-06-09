@@ -35,6 +35,8 @@ class LoginWithCookies(object):
         self.driver.get('https://s.weibo.com/')
         # 如果cookie没有登录成功，重新获取cookies
         try:
+            # 最大化窗口
+            self.driver.maximize_window()
             WebDriverWait(self.driver, timeout=30).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_name')))
             logging.info('cookies is available')

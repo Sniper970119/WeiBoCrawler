@@ -52,9 +52,10 @@ class GetCookies(object):
             # 这里需要对页面进行刷新，对应处理第三方登录的单独弹窗登录
             self.driver.refresh()
             logging.info('refresh page')
-            # 最大化窗口并切换到第一页  以适配第三方应用
-            self.driver.maximize_window()
+            # 切换到第一选项卡
             self.driver.switch_to.window(windows[0])
+        # 最大化窗口 寻找登录标记
+        self.driver.maximize_window()
         # 登录检查,这里给最多再给30秒用来进行登录，这里作为输入用户名和密码的等待，第三方登录最多允许10秒
         WebDriverWait(self.driver, timeout=30).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_name')))
