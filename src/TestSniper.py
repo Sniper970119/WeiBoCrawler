@@ -1,20 +1,21 @@
 # -*- coding:utf-8 -*-
-from src.loginWeiBo import GetCookies
-from src.systemTools import LoginWithCookies
-from src.handleAwardWeiBo import FindAwardWeiBo
 
 if __name__ == '__main__':
     """
     获取cookies测试
     """
+    from src.loginWeiBo import GetCookies
     GetCookies.GetCookies()
     """
     使用cookies登录测试
     """
-    LoginWithCookies.LoginWithCookies()
+    from src.systemTools import LoginWithCookies
+    # LoginWithCookies.LoginWithCookies()
     """
     寻找抽奖微博测试
     """
-    # FindAwardWeiBo.FindAwardWeiBo()
+    from src.handleAwardWeiBo import FindAwardWeiBo
+    # FindAwardWeiBo.FindAwardWeiBo().find_one_page()
+
 
     pass
