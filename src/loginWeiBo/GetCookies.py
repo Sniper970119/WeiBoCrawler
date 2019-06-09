@@ -60,3 +60,4 @@ class GetCookies(object):
         pickle.dump(cookies, io.open("./cookie/cookies.pkl", "wb"))
         logging.info('cookies has been saved')
         self.driver.close()
+        print('hello,world')
