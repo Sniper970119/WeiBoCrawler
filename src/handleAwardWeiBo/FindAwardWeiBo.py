@@ -12,5 +12,5 @@ class FindAwardWeiBo(object):
         self.wait = WebDriverWait(self.driver, timeout=10)
         pass
 
-    def findOnePage(self, session, new_cookies, pagenumber=1):
+    def find_one_page(self, session, new_cookies, pagenumber=1):
         pass
