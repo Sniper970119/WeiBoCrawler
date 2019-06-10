@@ -21,6 +21,7 @@ class FindCondation(object):
             have_guan = len(re.findall('关', weibo_main_body[i]))
             have_zhu = len(re.findall('注', weibo_main_body[i]))
             have_zhuan = len(re.findall('转', weibo_main_body[i]))
+            have_you = len(re.findall('友', weibo_main_body[i]))
             need_attention = re.findall('@(.{1,20})</a>', weibo_main_body[i], re.S)
             # 判断是否需要点赞操作
             if have_zan > 0:
@@ -37,6 +38,11 @@ class FindCondation(object):
                 temp_dir['need_forward'] = '1'
             else:
                 temp_dir['need_forward'] = '0'
+            # 判断是否需要at好友
+            if have_you > 0:
+                temp_dir['need_at_friend'] = '1'
+            else:
+                temp_dir['need_at_friend'] = '0'
             # 增加关注列表
             temp_dir['attention_list'] = need_attention
             condation.append(temp_dir)
