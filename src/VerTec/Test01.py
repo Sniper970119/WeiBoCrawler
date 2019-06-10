@@ -30,7 +30,18 @@ text = """
 </p>
 <!--card解析-->
 """
+
 import re
-weibo_main_body = re.findall('<p class="txt".*>(.*)</p>\s<!--card解析-->', text)
-print(len(weibo_main_body))
-print(weibo_main_body)
+
+# weibo_main_body = re.findall('<p class="txt".*>(.*)</p>\s<!--card解析-->', text)
+# print(len(weibo_main_body))
+# print(weibo_main_body)
+text1 = 'target="_blank">@叫我马买买</a> <b'
+# need_attention = re.findall('@(.*?)</a>', text1)
+# print(need_attention)
+text2 = """
+<p class="txt" nick-name="钱哥" node-type="feed_list_content">
+                    暴富机会来了 豪送30000[小仙女]   <br/>   <br/>转这条 同时关注 我和 <a href="//weibo.com/n/%E7%BE%8E%E5%B0%91%E5%A5%B3Lisa%E9%85%B1" target="_blank">@美少女Lisa酱</a>  <br/>6.24至6.29每天抽一人打5000 连续6天~   <br/>   <br/>通过<a href="//weibo.com/n/%E5%BE%AE%E5%8D%9A%E6%8A%BD%E5%A5%96%E5%B9%B3%E5%8F%B0" target="_blank">@微博<em class="s-color-red">抽奖</em>平台</a> 公开 你将会是下一条锦鲤<img alt="[锦鲤]" class="face" src="//img.t.sinajs.cn/t4/appstyle/expression/ext/normal/94/hbf2019_jinli_org.png" title="[锦鲤]"/> ​ ​​​                </p>
+"""
+user = re.findall('@(.{1,20})</a>', text2, re.S)
+print(user)

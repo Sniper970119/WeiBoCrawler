@@ -9,6 +9,8 @@ import urllib.parse
 import time
 import re
 
+from src.handleAwardWeiBo import FindCondation
+
 
 class FindAwardWeiBo(object):
     def __init__(self):
@@ -34,8 +36,8 @@ class FindAwardWeiBo(object):
         get_info = soup.find_all('p', attrs={'node-type': 'feed_list_content'})
         weibo_main_body = []
         for i in get_info:
-            weibo_main_body.append(i.text)
-
+            weibo_main_body.append(str(i))
+        condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
         # 处理当前页的微博
         for i in range(1, len(weibo_list) + 1):
             weibo_id = 1
