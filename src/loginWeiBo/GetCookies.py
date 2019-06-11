@@ -19,7 +19,7 @@ class GetCookies(object):
     执行登录操作
     """
 
-    def __init__(self, executable_path="../driver/win/chromedriver.exe"):
+    def __init__(self, executable_path="./driver/win/chromedriver.exe"):
         # 初始化自动测试驱动
         self.driver = webdriver.Chrome(executable_path=executable_path)
         # 初始化等待时间，10s
@@ -67,4 +67,4 @@ class GetCookies(object):
             os.mkdir("cookie")
         pickle.dump(cookies, io.open("./cookie/cookies.pkl", "wb"))
         logging.info('cookies has been saved')
-        self.driver.close()
+        self.driver.quit()

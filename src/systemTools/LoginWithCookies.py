@@ -6,6 +6,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 import pickle
 import io
+import os
 
 from src import config
 import logging
@@ -17,7 +18,7 @@ from src.loginWeiBo import GetCookies
 
 
 class LoginWithCookies(object):
-    def __init__(self, executable_path="../driver/win/chromedriver.exe"):
+    def __init__(self, executable_path="./driver/win/chromedriver.exe"):
         # 初始化自动测试驱动
         self.driver = webdriver.Chrome(executable_path=executable_path)
         # 初始化等待时间，10s
@@ -37,12 +38,13 @@ class LoginWithCookies(object):
         try:
             # 最大化窗口
             self.driver.maximize_window()
-            WebDriverWait(self.driver, timeout=30).until(
+            WebDriverWait(self.driver, timeout=10).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_name')))
             logging.info('cookies is available')
             return self.driver
         except:
-            # 这里因为是序列化存储的cookies 我没有测试cookies失效的情况，只做了处理，没测试
+            # cookies失效，删除失效文件重新获取
             logging.info('cookies is not available')
+            os.remove('./cookie/cookies.pkl')
             GetCookies.GetCookies()
             self.login_with_cookie()

@@ -8,19 +8,31 @@ from src.systemTools import LoginWithCookies
 import urllib.parse
 import time
 import re
+import configparser
+
+from src import config
+import logging
+
+logging.basicConfig(level=config.LOGGING_LEVEL,
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 from src.handleAwardWeiBo import FindCondation
 
 
 class FindAwardWeiBo(object):
     def __init__(self):
+        # 读取配置文件，获得两个朋友微博id，用来处理有的微博需要at两个好友
+        cf = configparser.ConfigParser()
+        cf.read('./friends.ini', encoding='utf-8')
+        self.friend_1 = cf.get('FRIENDS', 'friend_1')
+        self.friend_2 = cf.get('FRIENDS', 'friend_2')
+        pass
+
+    def find_one_page(self, pagenumber=1):
         # 初始化已经带cookies的测试驱动
         self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
-        pass
-
-    def find_one_page(self, pagenumber=1):
         # 关键字编码
         keyword_change = urllib.parse.quote_plus('抽奖')
         keyword_change = urllib.parse.quote_plus(keyword_change)
@@ -37,10 +49,89 @@ class FindAwardWeiBo(object):
         weibo_main_body = []
         for i in get_info:
             weibo_main_body.append(str(i))
+        # 获取当前页微博简单处理后的抽奖要求
         condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
         # 处理当前页的微博
-        for i in range(1, len(weibo_list) + 1):
-            weibo_id = 1
+        for i in range(0, len(weibo_list)):
+            index_id = i + 1
+
+            # 处理点赞
+            if condation[i]['need_zan'] == '1':
+                # 关注
+                self.attention_user(index_id)
+                # 获取点赞按钮,
+                css_like = '#pl_feedlist_index > div:nth-child(1) > div:nth-child(' + str(
+                    index_id) + ') > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(4) > a:nth-child(1)'
+                like_button = self.wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, css_like)))
+                logging.info('like button has been found')
+                like_button.click()
+
+            # 处理关注
+            if condation[i]['need_attention'] == '1':
+                # 关注
+                self.attention_user(index_id)
+
+            # 处理转发
+            if condation[i]['need_forward'] == '1':
+                # 关注
+                self.attention_user(index_id)
+                # 获取转发按钮,
+                css_forward = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
+                    index_id) + ') > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'
+                forward_button = self.wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, css_forward)))
+                logging.info('forward button has been found')
+                forward_button.click()
+                # 获取转发输入
+                forward_input_text = self.wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR,
+                         'body > div.m-layer > div.inner > div > div:nth-child(2) > div > div.func > div > div.input > textarea')))
+                logging.info('forward input text has been found')
+                forward_text = '1234'
+                # 如果需要at好友
+                if condation[i]['need_at_friend'] == '1':
+                    forward_text = '@' + self.friend_1 + '  @' + self.friend_2
+                forward_input_text.send_keys(forward_text)
+                # 获取转发按钮
+                forward_input_button = self.wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR,
+                         '.s-btn-g')))
+                logging.info('forward input button has been found')
+                forward_input_button.click()
+            pass
+        self.driver.quit()
+        pass
+
+    def attention_user(self, index_id):
+        """
+        关注在当前页下的某博主
+        :param index_id: 当前页相对索引id
+        :return:
+        """
+        # 首先获取头像
+        avatar_css = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
+            index_id) + ') > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > a:nth-child(1)'
+        avatar_button = self.wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, avatar_css)))
+        logging.info('avatar button has been found')
+        avatar_button.click()
+        # 切换到新页面
+        windows = self.driver.window_handles
+        self.driver.switch_to.window(windows[1])
+        # 查找关注按钮
+        attention_button = self.wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, 'div.btn_bed:nth-child(1) > a:nth-child(1)')))
+        logging.info('attention button has been found')
+        attention_button.click()
+        # 切换回搜索页面
+        self.driver.switch_to.window(windows[0])
         pass
 
 # pl_feedlist_index > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)

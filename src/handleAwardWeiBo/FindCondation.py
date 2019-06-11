@@ -35,7 +35,9 @@ class FindCondation(object):
                 temp_dir['need_attention'] = '0'
             # 判断是否需要转发
             if have_zhuan > 0:
+                # 需要转发默认需要关注
                 temp_dir['need_forward'] = '1'
+                temp_dir['need_attention'] = '1'
             else:
                 temp_dir['need_forward'] = '0'
             # 判断是否需要at好友
