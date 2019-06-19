@@ -126,8 +126,14 @@ class FindAwardWeiBo(threading.Thread):
                 logging.info('forward input button has been found')
                 forward_input_button.click()
                 time.sleep(random.randint(1, 3))
+
+            # 处理转发微博中的其他关注
+            if len(condation[i]['attention_list']) > 0:
+                for each in condation[i]['attention_list']:
+                    self.attention_other_user(each)
+                pass
             # 随机暂停1~n秒
-            time.sleep(random.randint(1, 10))
+            time.sleep(random.randint(1, 5))
             pass
         self.driver.quit()
         pass
@@ -177,3 +183,47 @@ class FindAwardWeiBo(threading.Thread):
         self.driver.switch_to.window(windows[0])
         time.sleep(random.randint(1, 3))
         pass
+
+    def attention_other_user(self, user_name):
+        """
+        关注其他用户
+        :return:
+        """
+        # 初始化username
+        user_name = '@' + user_name
+        # 初始化已经带cookies的测试驱动
+        driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
+        # 初始化等待时间，10s
+        wait = WebDriverWait(driver, timeout=10)
+        # 关键字编码
+        keyword_change = urllib.parse.quote_plus('抽奖')
+        keyword_change = urllib.parse.quote_plus(keyword_change)
+        # 构建URL
+        url = 'https://s.weibo.com/weibo/' + user_name
+        driver.get(url)
+        user_name_button = wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR,
+                 '#pl_feedlist_index > div:nth-child(1) > div:nth-child(1) > div > div.info > div > a.name')))
+        logging.info('user name button has been found')
+        user_name_button.click()
+
+        # 切换到新页面
+        windows = driver.window_handles
+        driver.switch_to.window(windows[-1])
+        # 查找关注按钮
+        attention_button = wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, '#Pl_Official_Headerv6__1 > div.PCD_header > div > div.shadow > div.pf_opt > div > div:nth-child(1) > a:nth-child(1)')))
+        logging.info('attention button has been found')
+        attention_button.click()
+        text = driver.page_source
+        soup = BeautifulSoup(text, 'html5lib')
+        # 使用bs4 获取uid附近的字符
+        uid_info = soup.find_all('div', attrs={'node-type': 'focusLink'})
+        # 获取关注用户的uid
+        uid = re.findall("uid=(.*?)&", str(uid_info))[0]
+        name = re.findall("fnick=(.*?)&", str(uid_info))[0]
+        self.user_database_tools.save_data(uid, name)
+        driver.quit()
+

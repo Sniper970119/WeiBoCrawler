@@ -21,5 +21,9 @@ if __name__ == '__main__':
 
     # FindAwardWeiBo.FindAwardWeiBo().start()
     threading.Thread(target=FindAwardWeiBo.FindAwardWeiBo().find_one_page, args=(1, 0)).start()
+    """
+    测试关注其他用户
+    """
+    # FindAwardWeiBo.FindAwardWeiBo().attention_other_user('博物小馆')
 
-    pass
+pass
