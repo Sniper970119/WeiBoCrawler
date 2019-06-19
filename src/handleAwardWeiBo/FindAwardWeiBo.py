@@ -4,7 +4,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+
+from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
+from src.systemTools import HandleUserInDatabase
 import urllib.parse
 import time
 import re
@@ -26,6 +29,8 @@ class FindAwardWeiBo(object):
         cf.read('./friends.ini', encoding='utf-8')
         self.friend_1 = cf.get('FRIENDS', 'friend_1')
         self.friend_2 = cf.get('FRIENDS', 'friend_2')
+        GetCookies.GetCookies()
+        self.user_database_tools = HandleUserInDatabase.HandleUserInDatabase()
         pass
 
     def find_one_page(self, pagenumber=1):
@@ -53,15 +58,18 @@ class FindAwardWeiBo(object):
         condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
         # 处理当前页的微博
         for i in range(0, len(weibo_list)):
+            forword = False
             index_id = i + 1
-
+            print(index_id)
             # 处理点赞
             if condation[i]['need_zan'] == '1':
-                # 关注
-                self.attention_user(index_id)
+                # 关注, 只执行（判断）一次
+                if forword is False:
+                    self.attention_user(index_id)
+                    forword = True
                 # 获取点赞按钮,
-                css_like = '#pl_feedlist_index > div:nth-child(1) > div:nth-child(' + str(
-                    index_id) + ') > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(4) > a:nth-child(1)'
+                css_like = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
+                    index_id) + ') > div > div.card-act > ul > li:nth-child(4) > a'
                 like_button = self.wait.until(
                     EC.element_to_be_clickable(
                         (By.CSS_SELECTOR, css_like)))
@@ -70,13 +78,17 @@ class FindAwardWeiBo(object):
 
             # 处理关注
             if condation[i]['need_attention'] == '1':
-                # 关注
-                self.attention_user(index_id)
+                # 关注, 只执行一次
+                if forword is False:
+                    self.attention_user(index_id)
+                    forword = True
 
             # 处理转发
             if condation[i]['need_forward'] == '1':
-                # 关注
-                self.attention_user(index_id)
+                # 关注, 只执行一次
+                if forword is False:
+                    self.attention_user(index_id)
+                    forword = True
                 # 获取转发按钮,
                 css_forward = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
                     index_id) + ') > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'
@@ -113,7 +125,7 @@ class FindAwardWeiBo(object):
         :param index_id: 当前页相对索引id
         :return:
         """
-        # 首先获取头像
+        # 首先获取昵称（用来点击到详情页）
         avatar_css = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
             index_id) + ') > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > a:nth-child(1)'
         avatar_button = self.wait.until(
@@ -130,9 +142,16 @@ class FindAwardWeiBo(object):
                 (By.CSS_SELECTOR, 'div.btn_bed:nth-child(1) > a:nth-child(1)')))
         logging.info('attention button has been found')
         attention_button.click()
+        text = self.driver.page_source
+        soup = BeautifulSoup(text, 'html5lib')
+        # 使用bs4 获取uid附近的字符
+        uid_info = soup.find_all('div', attrs={'node-type': 'focusLink'})
+        # 获取关注用户的uid
+        uid = re.findall("uid=(.*?)&", str(uid_info))[0]
+        self.user_database_tools.save_data(uid)
         # 切换回搜索页面
         self.driver.switch_to.window(windows[0])
         pass
 
-# pl_feedlist_index > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)
-# pl_feedlist_index > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)
+# pl_feedlist_index > div:nth-child(2) > div:nth-child(1) > div > div.card-act > ul > li:nth-child(4) > a
+# pl_feedlist_index > div:nth-child(2) > div:nth-child(2) > div > div.card-act > ul > li:nth-child(4) > a
