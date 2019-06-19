@@ -21,3 +21,4 @@ text1 = """
 </div>]"""
 # print(re.findall("CONFIG['oid']='(.*?)'", text))
 print(re.findall("uid=(.*?)&", text1))
+print(re.findall("fnick=(.*?)&", text1))

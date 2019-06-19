@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+import random
+import threading
+
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -22,8 +25,14 @@ logging.basicConfig(level=config.LOGGING_LEVEL,
 from src.handleAwardWeiBo import FindCondation
 
 
-class FindAwardWeiBo(object):
-    def __init__(self):
+class FindAwardWeiBo(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        # 对线程初始化
+        super(FindAwardWeiBo, self).__init__(*args, **kwargs)
+        self.__flag = threading.Event()  # 用于暂停线程的标识
+        self.__flag.set()  # 设置为True
+        self.__running = threading.Event()  # 用于停止线程的标识
+        self.__running.set()  # 将running设置为True
         # 读取配置文件，获得两个朋友微博id，用来处理有的微博需要at两个好友
         cf = configparser.ConfigParser()
         cf.read('./friends.ini', encoding='utf-8')
@@ -33,7 +42,7 @@ class FindAwardWeiBo(object):
         self.user_database_tools = HandleUserInDatabase.HandleUserInDatabase()
         pass
 
-    def find_one_page(self, pagenumber=1):
+    def find_one_page(self, pagenumber=1, from_index=0):
         # 初始化已经带cookies的测试驱动
         self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
@@ -57,7 +66,7 @@ class FindAwardWeiBo(object):
         # 获取当前页微博简单处理后的抽奖要求
         condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
         # 处理当前页的微博
-        for i in range(0, len(weibo_list)):
+        for i in range(from_index, len(weibo_list)):
             forword = False
             index_id = i + 1
             print(index_id)
@@ -65,7 +74,7 @@ class FindAwardWeiBo(object):
             if condation[i]['need_zan'] == '1':
                 # 关注, 只执行（判断）一次
                 if forword is False:
-                    self.attention_user(index_id)
+                    self.attention_user(index_id, pagenumber)
                     forword = True
                 # 获取点赞按钮,
                 css_like = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
@@ -80,14 +89,14 @@ class FindAwardWeiBo(object):
             if condation[i]['need_attention'] == '1':
                 # 关注, 只执行一次
                 if forword is False:
-                    self.attention_user(index_id)
+                    self.attention_user(index_id, pagenumber)
                     forword = True
 
             # 处理转发
             if condation[i]['need_forward'] == '1':
                 # 关注, 只执行一次
                 if forword is False:
-                    self.attention_user(index_id)
+                    self.attention_user(index_id, pagenumber)
                     forword = True
                 # 获取转发按钮,
                 css_forward = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
@@ -103,7 +112,8 @@ class FindAwardWeiBo(object):
                         (By.CSS_SELECTOR,
                          'body > div.m-layer > div.inner > div > div:nth-child(2) > div > div.func > div > div.input > textarea')))
                 logging.info('forward input text has been found')
-                forward_text = '1234'
+                # 随机转发文本
+                forward_text = ''.join(random.sample('0123456789', 6))
                 # 如果需要at好友
                 if condation[i]['need_at_friend'] == '1':
                     forward_text = '@' + self.friend_1 + '  @' + self.friend_2
@@ -115,11 +125,14 @@ class FindAwardWeiBo(object):
                          '.s-btn-g')))
                 logging.info('forward input button has been found')
                 forward_input_button.click()
+                time.sleep(random.randint(1, 3))
+            # 随机暂停1~n秒
+            time.sleep(random.randint(1, 10))
             pass
         self.driver.quit()
         pass
 
-    def attention_user(self, index_id):
+    def attention_user(self, index_id, page_number):
         """
         关注在当前页下的某博主
         :param index_id: 当前页相对索引id
@@ -132,10 +145,20 @@ class FindAwardWeiBo(object):
             EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, avatar_css)))
         logging.info('avatar button has been found')
-        avatar_button.click()
+        try:
+            avatar_button.click()
+        except:
+            # 多半是因为上一步转发失败，导致这一步发生错误，开启新线程重新调用方法
+            # index -2 是因为所以比i大1，并且上一个失败，所以需要 -1 -1 重新执行操作
+            threading.Thread(target=self.find_one_page, args=(page_number, index_id - 2)).start()
+            logging.info('create new threading')
+            self.driver.quit()
+            logging.info('old thread alive')
+            pass
+        time.sleep(random.randint(1, 3))
         # 切换到新页面
         windows = self.driver.window_handles
-        self.driver.switch_to.window(windows[1])
+        self.driver.switch_to.window(windows[-1])
         # 查找关注按钮
         attention_button = self.wait.until(
             EC.element_to_be_clickable(
@@ -148,10 +171,9 @@ class FindAwardWeiBo(object):
         uid_info = soup.find_all('div', attrs={'node-type': 'focusLink'})
         # 获取关注用户的uid
         uid = re.findall("uid=(.*?)&", str(uid_info))[0]
-        self.user_database_tools.save_data(uid)
+        name = re.findall("fnick=(.*?)&", str(uid_info))[0]
+        self.user_database_tools.save_data(uid, name)
         # 切换回搜索页面
         self.driver.switch_to.window(windows[0])
+        time.sleep(random.randint(1, 3))
         pass
-
-# pl_feedlist_index > div:nth-child(2) > div:nth-child(1) > div > div.card-act > ul > li:nth-child(4) > a
-# pl_feedlist_index > div:nth-child(2) > div:nth-child(2) > div > div.card-act > ul > li:nth-child(4) > a

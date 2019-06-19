@@ -15,7 +15,7 @@ class HandleUserInDatabase(object):
         mydb = myclient["WeiboAward"]
         self.mycol = mydb["User"]
 
-    def save_data(self, uid):
+    def save_data(self, uid, name):
         """
         保存uid
         :param uid:
@@ -27,7 +27,8 @@ class HandleUserInDatabase(object):
                 logging.error('repeat uid')
                 return
         except:
-            self.mycol.insert({'uid': uid, 'forward_time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())})
+            self.mycol.insert(
+                {'uid': uid, 'name': name, 'forward_time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())})
 
     def find_data(self, uid):
         """
@@ -38,4 +39,3 @@ class HandleUserInDatabase(object):
         if len(self.mycol.find_one({"uid": uid})) > 0:
             return True
         return False
-

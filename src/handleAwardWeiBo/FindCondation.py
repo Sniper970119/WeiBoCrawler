@@ -17,14 +17,15 @@ class FindCondation(object):
         for i in range(0, len(weibo_list)):
             temp_dir = {}
             # 判断正文中是否出现这种字眼
-            have_zan = len(re.findall('赞', weibo_main_body[i]))
-            have_guan = len(re.findall('关', weibo_main_body[i]))
-            have_zhu = len(re.findall('注', weibo_main_body[i]))
-            have_zhuan = len(re.findall('转', weibo_main_body[i]))
-            have_you = len(re.findall('友', weibo_main_body[i]))
+            have_dian = len(re.findall('点', weibo_main_body[i], re.S))
+            have_zan = len(re.findall('赞', weibo_main_body[i], re.S))
+            have_guan = len(re.findall('关', weibo_main_body[i], re.S))
+            have_zhu = len(re.findall('注', weibo_main_body[i], re.S))
+            have_zhuan = len(re.findall('转', weibo_main_body[i], re.S))
+            have_you = len(re.findall('友', weibo_main_body[i], re.S))
             need_attention = re.findall('@(.{1,20})</a>', weibo_main_body[i], re.S)
             # 判断是否需要点赞操作
-            if have_zan > 0:
+            if have_zan > 0 or have_dian > 0:
                 temp_dir['need_zan'] = '1'
             else:
                 temp_dir['need_zan'] = '0'
