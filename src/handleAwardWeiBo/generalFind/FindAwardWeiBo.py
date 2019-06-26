@@ -7,10 +7,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
+
 from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
 from src.systemTools import HandleUserInDatabase
 from src.systemTools import HandleWeiBoInDatebase
+from src.handleAwardWeiBo.generalFind import FindCondation
+
 import urllib.parse
 import time
 import re
@@ -22,10 +25,12 @@ import logging
 logging.basicConfig(level=config.LOGGING_LEVEL,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
-from src.handleAwardWeiBo.generalFind import FindCondation
 
 
 class FindAwardWeiBo(threading.Thread):
+    """
+    常规搜索查找
+    """
     def __init__(self, *args, **kwargs):
         # 对线程初始化
         super(FindAwardWeiBo, self).__init__(*args, **kwargs)
