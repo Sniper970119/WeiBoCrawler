@@ -26,9 +26,17 @@ if __name__ == '__main__':
 
 
     """
+    测试单独用户的查找转发
+    """
+    from src.handleAwardWeiBo.customFind import FindQianGe
+
+    threading.Thread(target=FindQianGe.FindQianGe().find_weibo()).start()
+    ()
+
+    """
     技术验证根目的测试
     """
-    from src.VerTec import test05
-    test05.Test05()
+    # from src.VerTec import test05
+    # test05.Test05()
 
 pass
