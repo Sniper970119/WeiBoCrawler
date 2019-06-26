@@ -7,7 +7,7 @@ import re
 # friend_2 = cf.get('FRIENDS', 'friend_2')
 # print(friend_1, friend_2)
 
-text = "$CONFIG['oid']='119504454'"
+text = "车$专CONFIG['oid']='119504454'"
 text1 = """
 [
 <div action-data="uid=1746575865&amp;fnick=互联网俊明说&amp;f=1&amp;refer_flag=1005050001_&amp;refer_lflag=1001030103_&amp;refer_from=profile_headerv6&amp;template=7&amp;nogroup=1&amp;special_focus=1&amp;isrecommend=1&amp;is_special=0&amp;redirect_url=%2Fp%2F1005055123485468%2Fmyfollow%3Fgid%3D3739420521408994%23place"
@@ -20,5 +20,5 @@ text1 = """
                                                                        suda-uatrack="key=wb_pc_profile&amp;value=atten_down">g</em></a>
 </div>]"""
 # print(re.findall("CONFIG['oid']='(.*?)'", text))
-print(re.findall("uid=(.*?)&", text1))
-print(re.findall("fnick=(.*?)&", text1))
+# print(re.findall("uid=(.*?)&", text1))
+print(re.findall("车.{0,3}专", text))

@@ -3,7 +3,6 @@ import random
 import threading
 
 from bs4 import BeautifulSoup
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -11,6 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
 from src.systemTools import HandleUserInDatabase
+from src.systemTools import HandleWeiBoInDatebase
 import urllib.parse
 import time
 import re
@@ -22,7 +22,7 @@ import logging
 logging.basicConfig(level=config.LOGGING_LEVEL,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
-from src.handleAwardWeiBo import FindCondation
+from src.handleAwardWeiBo.generalFind import FindCondation
 
 
 class FindAwardWeiBo(threading.Thread):
@@ -56,7 +56,7 @@ class FindAwardWeiBo(threading.Thread):
         text = self.driver.page_source
         # 生成bs4对象
         soup = BeautifulSoup(text, 'html5lib')
-        # 将该页微博的微博id正则出
+        # 将该页微博的微博id(mid)正则出
         weibo_list = re.findall('.*?feed_list_item" mid="(.*?)">', str(text))
         # 使用bs4 获取微博的正文（为什么不用正则呢，因为正则如果加上re.S 慢的我想死）
         get_info = soup.find_all('p', attrs={'node-type': 'feed_list_content'})
@@ -70,6 +70,15 @@ class FindAwardWeiBo(threading.Thread):
             forword = False
             index_id = i + 1
             print(index_id)
+            # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
+            if condation[i]['need_zan'] == '1' or condation[i]['need_attention'] == '1' or condation[i][
+                'need_forward'] == '1':
+                # 判断是否被操作
+                if HandleWeiBoInDatebase.HandleUserInDatabase().if_have_data_and_save_it(weibo_list[i]):
+                    continue
+                pass
+            else:
+                continue
             # 处理点赞
             if condation[i]['need_zan'] == '1':
                 # 关注, 只执行（判断）一次
@@ -116,7 +125,7 @@ class FindAwardWeiBo(threading.Thread):
                 forward_text = ''.join(random.sample('0123456789', 6))
                 # 如果需要at好友
                 if condation[i]['need_at_friend'] == '1':
-                    forward_text = '@' + self.friend_1 + '  @' + self.friend_2
+                    forward_text = '@' + self.friend_1 + '  @' + self.friend_2 + '    ' + forward_text
                 forward_input_text.send_keys(forward_text)
                 # 获取转发按钮
                 forward_input_button = self.wait.until(
@@ -132,6 +141,8 @@ class FindAwardWeiBo(threading.Thread):
                 for each in condation[i]['attention_list']:
                     self.attention_other_user(each)
                 pass
+            # 将该微博保存到数据库
+            # HandleWeiBoInDatebase.HandleUserInDatabase().save_data(weibo_list[i])
             # 随机暂停1~n秒
             time.sleep(random.randint(1, 5))
             pass
@@ -156,7 +167,7 @@ class FindAwardWeiBo(threading.Thread):
         except:
             # 多半是因为上一步转发失败，导致这一步发生错误，开启新线程重新调用方法
             # index -2 是因为所以比i大1，并且上一个失败，所以需要 -1 -1 重新执行操作
-            threading.Thread(target=self.find_one_page, args=(page_number, index_id - 2)).start()
+            threading.Thread(target=self.award_run, args=(page_number, index_id - 2)).start()
             logging.info('create new threading')
             self.driver.quit()
             logging.info('old thread alive')
@@ -201,10 +212,19 @@ class FindAwardWeiBo(threading.Thread):
         # 构建URL
         url = 'https://s.weibo.com/weibo/' + user_name
         driver.get(url)
+
+        # 找人按钮
+        find_people = wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR,
+                 'body > div.m-main > div.m-main-nav.s-mt28 > ul > li:nth-child(2) > a')))
+        logging.info('find people button has been found')
+        find_people.click()
+        # 第一个用户
         user_name_button = wait.until(
             EC.element_to_be_clickable(
                 (By.CSS_SELECTOR,
-                 '#pl_feedlist_index > div:nth-child(1) > div:nth-child(1) > div > div.info > div > a.name')))
+                 '#pl_user_feedList > div:nth-child(1) > div.info > div > a.name')))
         logging.info('user name button has been found')
         user_name_button.click()
 
@@ -214,7 +234,8 @@ class FindAwardWeiBo(threading.Thread):
         # 查找关注按钮
         attention_button = wait.until(
             EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, '#Pl_Official_Headerv6__1 > div.PCD_header > div > div.shadow > div.pf_opt > div > div:nth-child(1) > a:nth-child(1)')))
+                (By.CSS_SELECTOR,
+                 '#Pl_Official_Headerv6__1 > div.PCD_header > div > div.shadow > div.pf_opt > div > div:nth-child(1) > a:nth-child(1)')))
         logging.info('attention button has been found')
         attention_button.click()
         text = driver.page_source
@@ -227,3 +248,11 @@ class FindAwardWeiBo(threading.Thread):
         self.user_database_tools.save_data(uid, name)
         driver.quit()
 
+    def award_run(self, from_page=1, index_number=0):
+        """
+        运行程序
+        :return:
+        """
+        for i in range(from_page, 20):
+            print('page:' + str(i))
+            self.find_one_page(i, index_number)

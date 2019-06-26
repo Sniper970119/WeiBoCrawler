@@ -28,7 +28,7 @@ class HandleUserInDatabase(object):
                 return
         except:
             self.mycol.insert(
-                {'uid': uid, 'name': name, 'forward_time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())})
+                {'uid': uid, 'name': name, 'followed_time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())})
 
     def find_data(self, uid):
         """

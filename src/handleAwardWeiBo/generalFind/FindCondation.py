@@ -23,6 +23,7 @@ class FindCondation(object):
             have_zhu = len(re.findall('注', weibo_main_body[i], re.S))
             have_zhuan = len(re.findall('转', weibo_main_body[i], re.S))
             have_you = len(re.findall('友', weibo_main_body[i], re.S))
+            have_che_zhuan = len(re.findall('车.{0,3}专', weibo_main_body[i], re.S))
             need_attention = re.findall('@(.{1,20})</a>', weibo_main_body[i], re.S)
             # 判断是否需要点赞操作
             if have_zan > 0 or have_dian > 0:
@@ -35,7 +36,7 @@ class FindCondation(object):
             else:
                 temp_dir['need_attention'] = '0'
             # 判断是否需要转发
-            if have_zhuan > 0:
+            if have_zhuan > 0 or have_che_zhuan > 0:
                 # 需要转发默认需要关注
                 temp_dir['need_forward'] = '1'
                 temp_dir['need_attention'] = '1'
