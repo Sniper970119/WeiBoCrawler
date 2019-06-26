@@ -12,7 +12,7 @@ from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
 from src.systemTools import HandleUserInDatabase
 from src.systemTools import HandleWeiBoInDatebase
-from src.handleAwardWeiBo.generalFind import FindCondation
+from src.handleAwardWeiBo import FindCondation
 
 import urllib.parse
 import time
