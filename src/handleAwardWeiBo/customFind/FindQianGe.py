@@ -46,7 +46,7 @@ class FindQianGe(threading.Thread):
         # 钱哥微博地址
         self.url = 'https://weibo.com/u/6074930760?topnav=1&wvr=6&topsug=1&is_all=1'
 
-    def find_weibo(self, url= 'https://weibo.com/u/6074930760?topnav=1&wvr=6&topsug=1&is_all=1'):
+    def find_weibo(self, url='https://weibo.com/u/6074930760?topnav=1&wvr=6&topsug=1&is_all=1'):
         """
         搜索微博
         :return:
@@ -63,26 +63,53 @@ class FindQianGe(threading.Thread):
         weibo_user = re.findall("CONFIG.*?onick.*?='(.*?)'", text)[0]
         # 生成bs4对象
         soup = BeautifulSoup(text, 'html5lib')
-        get_weibo = soup.find_all('div', attrs={'class': 'WB_from S_txt2'})
-
+        # 所有的微博信息
+        get_weibo = soup.find_all('div', attrs={'class': 'WB_detail'})
+        # 保存微博所有信息的str
+        get_weibo_str = []
         # 将该页微博的微博id(mid)正则出
-        weibo_list = re.findall('.*?feed_list_item" mid="(.*?)">', str(text))
-        # 使用bs4 获取微博的正文（为什么不用正则呢，因为正则如果加上re.S 慢的我想死）
-        get_info = soup.find_all('p', attrs={'node-type': 'feed_list_content'})
-        weibo_main_body = []
-        for i in get_info:
-            weibo_main_body.append(str(i))
-        # 获取当前页微博简单处理后的抽奖要求
-        condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
+        weibo_mid = []
+        # 被转发微博者的昵称
+        forwarded_user = []
+        # 当前微博正文
+        weibo_context = []
+        # 被转发的微博正文
+        weibo_forwarded_context = []
+        for each in get_weibo:
+            # 该条微博的全部html代码
+            sub_text = str(each)
+            # 添加str
+            get_weibo_str.append(sub_text)
+            # 处理mid
+            weibo_mid.append(re.findall('name="(.*?)"', sub_text)[0])
+            # 处理被转发微博源用户
+            if_forward = re.findall('node-type="feed_list_originNick".*?>(.*?)</a>', sub_text)
+            # 处理微博正文
+            soup1 = BeautifulSoup(sub_text, 'html5lib')
+            # 当前微博正文
+            weibo_context.append(
+                soup1.find_all('div', attrs={'node-type': 'feed_list_content'})[0].text.replace(' ', ''))
+            # 分情况添加（是否为转发的微博）
+            if len(if_forward) > 0:
+                forwarded_user.append(if_forward[0])
+                # 被转发微博正文
+                weibo_forwarded_context.append(
+                    soup1.find_all('div', attrs={'node-type': 'feed_list_reason'})[0].text.replace(' ', ''))
+            else:
+                forwarded_user.append('')
+                weibo_forwarded_context.append('')
+        # 处理当前微博的抽奖条件
+        current_condation = FindCondation.FindCondation().find_condation(weibo_mid, weibo_context)
+        forwarded_condation = FindCondation.FindCondation().find_condation(weibo_mid, weibo_forwarded_context)
         # 遍历每个微博
-        for i in range(0, len(weibo_main_body)):
+        for i in range(0, len(weibo_mid)):
             index_id = i + 1
             sub_text = str(get_weibo[i])
             # 判断是否为转发的微博
-            origin_user = re.findall('node-type="feed_list_originNick"(.*?)</a>', sub_text)[0]
+            origin_user = re.findall('node-type="feed_list_originNick".*?>(.*?)</a>', sub_text)
             if len(origin_user) > 0:
                 # 寻找被转发者
-                forward_user = re.findall('title="(.*?)"', origin_user)
+                forward_user = re.findall('title="(.*?)"', origin_user[0])
                 # 判断被转发者是不是自己
                 if forward_user is origin_user:
                     continue

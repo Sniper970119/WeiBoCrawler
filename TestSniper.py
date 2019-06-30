@@ -31,7 +31,7 @@ if __name__ == '__main__':
     from src.handleAwardWeiBo.customFind import FindQianGe
 
     threading.Thread(target=FindQianGe.FindQianGe().find_weibo()).start()
-    ()
+
 
     """
     技术验证根目的测试
