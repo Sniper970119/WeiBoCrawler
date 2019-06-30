@@ -88,13 +88,13 @@ class FindQianGe(threading.Thread):
             soup1 = BeautifulSoup(sub_text, 'html5lib')
             # 当前微博正文
             weibo_context.append(
-                soup1.find_all('div', attrs={'node-type': 'feed_list_content'})[0].text.replace(' ', ''))
+                str(soup1.find_all('div', attrs={'node-type': 'feed_list_content'})[0]).replace(' ', ''))
             # 分情况添加（是否为转发的微博）
             if len(if_forward) > 0:
                 forwarded_user.append(if_forward[0])
                 # 被转发微博正文
                 weibo_forwarded_context.append(
-                    soup1.find_all('div', attrs={'node-type': 'feed_list_reason'})[0].text.replace(' ', ''))
+                    str(soup1.find_all('div', attrs={'node-type': 'feed_list_reason'})[0]).replace(' ', ''))
             else:
                 forwarded_user.append('')
                 weibo_forwarded_context.append('')
@@ -116,7 +116,7 @@ class FindQianGe(threading.Thread):
                 else:
                     need_ignore = False
                     # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
-                    if condation[i]['need_zan'] == '1' or condation[i]['need_attention'] == '1' or condation[i][
+                    if current_condation[i]['need_zan'] == '1' or current_condation[i]['need_attention'] == '1' or current_condation[i][
                         'need_forward'] == '1':
                         # 判断是否被操作
                         if HandleWeiBoInDatebase.HandleUserInDatabase().if_have_data_and_save_it(weibo_list[i]):
@@ -125,7 +125,7 @@ class FindQianGe(threading.Thread):
                     else:
                         continue
                     # 处理点赞
-                    if condation[i]['need_zan'] == '1':
+                    if current_condation[i]['need_zan'] == '1':
                         # 获取点赞按钮,
                         css_like = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
                             index_id) + ') > div > div.card-act > ul > li:nth-child(4) > a'
@@ -136,11 +136,11 @@ class FindQianGe(threading.Thread):
                         like_button.click()
 
                     # 处理关注
-                    if condation[i]['need_attention'] == '1':
+                    if current_condation[i]['need_attention'] == '1':
                         pass
 
                     # 处理转发
-                    if condation[i]['need_forward'] == '1':
+                    if current_condation[i]['need_forward'] == '1':
                         # 获取转发按钮,
                         css_forward = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
                             index_id) + ') > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'
@@ -158,7 +158,7 @@ class FindQianGe(threading.Thread):
                         # 随机转发文本
                         forward_text = ''.join(random.sample('0123456789', 6))
                         # 如果需要at好友
-                        if condation[i]['need_at_friend'] == '1':
+                        if current_condation[i]['need_at_friend'] == '1':
                             forward_text = '@' + self.friend_1 + '  @' + self.friend_2 + '    ' + forward_text
                         forward_input_text.send_keys(forward_text)
                         # 获取转发按钮
@@ -171,8 +171,8 @@ class FindQianGe(threading.Thread):
                         time.sleep(random.randint(1, 3))
 
                     # 处理转发微博中的其他关注
-                    if len(condation[i]['attention_list']) > 0:
-                        for each in condation[i]['attention_list']:
+                    if len(current_condation[i]['attention_list']) > 0:
+                        for each in current_condation[i]['attention_list']:
                             self.attention_other_user(each)
                         pass
                     # 随机暂停1~n秒
