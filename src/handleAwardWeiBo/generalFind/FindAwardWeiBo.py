@@ -225,6 +225,7 @@ class FindAwardWeiBo(threading.Thread):
                  'body > div.m-main > div.m-main-nav.s-mt28 > ul > li:nth-child(2) > a')))
         logging.info('find people button has been found')
         find_people.click()
+        time.sleep(1)
         # 第一个用户
         user_name_button = wait.until(
             EC.element_to_be_clickable(
@@ -243,6 +244,7 @@ class FindAwardWeiBo(threading.Thread):
                  '#Pl_Official_Headerv6__1 > div.PCD_header > div > div.shadow > div.pf_opt > div > div:nth-child(1) > a:nth-child(1)')))
         logging.info('attention button has been found')
         attention_button.click()
+        time.sleep(1)
         text = driver.page_source
         soup = BeautifulSoup(text, 'html5lib')
         # 使用bs4 获取uid附近的字符
@@ -258,6 +260,6 @@ class FindAwardWeiBo(threading.Thread):
         运行程序
         :return:
         """
-        for i in range(from_page, 20):
+        for i in range(from_page, 5):
             print('page:' + str(i))
             self.find_one_page(i, index_number)
