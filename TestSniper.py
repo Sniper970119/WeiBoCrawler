@@ -30,8 +30,13 @@ if __name__ == '__main__':
     """
     from src.handleAwardWeiBo.customFind import FindSingle
 
-    threading.Thread(target=FindSingle.FindQianGe().find_weibo()).start()
+    # threading.Thread(target=FindSingle.FindSingle().find_weibo()).start()
 
+    """
+    微博自动转发搜索模块测试
+    """
+    from src.handleAwardWeiBo import StartAutoFind
+    StartAutoFind.StartAutoFind().start()
 
     """
     技术验证根目的测试

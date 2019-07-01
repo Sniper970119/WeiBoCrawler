@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.loginWeiBo import GetCookies
-from src.systemTools import LoginWithCookies, HandleWeiBoInDatebase
+from src.systemTools import LoginWithCookies, HandleWeiBoInDatabase
 from src.systemTools import HandleUserInDatabase
 from src.handleAwardWeiBo.tools import FindCondation
 
@@ -24,14 +24,14 @@ logging.basicConfig(level=config.LOGGING_LEVEL,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 
-class FindQianGe(threading.Thread):
+class FindSingle(threading.Thread):
     """
     对定向用户 进行定制化转发
     """
 
     def __init__(self, *args, **kwargs):
         # 对线程初始化
-        super(FindQianGe, self).__init__(*args, **kwargs)
+        super(FindSingle, self).__init__(*args, **kwargs)
         self.__flag = threading.Event()  # 用于暂停线程的标识
         self.__flag.set()  # 设置为True
         self.__running = threading.Event()  # 用于停止线程的标识
@@ -46,7 +46,7 @@ class FindQianGe(threading.Thread):
         # 钱哥微博地址
         self.url = 'https://weibo.com/u/6074930760?topnav=1&wvr=6&topsug=1&is_all=1'
 
-    def find_weibo(self, url='https://weibo.com/u/6074930760?topnav=1&wvr=6&topsug=1&is_all=1', index_number=0):
+    def find_weibo(self, url='https://weibo.com/u/1611434914?is_hot=1a', index_number=0):
         """
         搜索微博
         :return:
@@ -55,7 +55,7 @@ class FindQianGe(threading.Thread):
         self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
-        self.driver.get(self.url)
+        self.driver.get(url)
         # 停留2秒作为页面刷新时间
         time.sleep(2)
         text = self.driver.page_source
@@ -103,8 +103,9 @@ class FindQianGe(threading.Thread):
         forwarded_condition = FindCondation.FindCondation().find_condation(weibo_mid, weibo_forwarded_context)
         # 遍历每个微博，处理当前微博condition
         for i in range(index_number, len(weibo_mid)):
-            print('-------------当前处理 @' + str(weibo_user) + ' 的第' + str(i + 1) + '条微博---------------')
-            print()
+            print('\033[32m-------------当前处理 @' + str(weibo_user) + ' 的第' + str(i + 1) + '条微博--------------\033[0m')
+            print('\033[32m------------- 点赞：'+str(current_condition[i]['need_zan'])+' 关注：'+str(current_condition[i]['need_attention'])+' 转发：'+str(current_condition[i]['need_forward'])+'---------------\033[0m')
+            print('\033[32m------------- 点赞：'+str(forwarded_condition[i]['need_zan'])+' 关注：'+str(forwarded_condition[i]['need_attention'])+' 转发：'+str(forwarded_condition[i]['need_forward'])+'---------------\033[0m')
             # 主页微博索引从2开始
             index_id = i + 2
             sub_text = str(get_weibo[i])
@@ -119,10 +120,14 @@ class FindQianGe(threading.Thread):
                     current_condition[i][
                         'need_forward'] == '1':
                 # 判断是否被操作
-                if HandleWeiBoInDatebase.HandleUserInDatabase().if_have_data_and_save_it(weibo_mid[i]):
+                if HandleWeiBoInDatabase.HandleWeiboInDatabase().if_have_data_and_save_it(weibo_mid[i]):
+                    print('\033[32m---------------已经操作过该条微博-------------------\033[0m')
+                    print()
                     continue
                 pass
             else:
+                print('\033[32m---------------该条微博不需要被操作-------------------\033[0m')
+                print()
                 continue
             # ----------------------------------------------------------------------
             # ----------------------------------------------------------------------
@@ -132,6 +137,7 @@ class FindQianGe(threading.Thread):
             # 处理转发  将转发放到最前，以方便对转发失败进行异常捕获
             if current_condition[i]['need_forward'] == '1':
                 # 获取转发按钮,
+
                 css_forward = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
                     index_id) + ') > div.WB_feed_handle > div > ul > li:nth-child(2) > a'
                 forward_button = self.wait.until(
@@ -192,6 +198,7 @@ class FindQianGe(threading.Thread):
                         continue
                     self.attention_other_user(each)
                 pass
+            print('\033[31m----------------成功操作当前微博--------------------\033[0m')
             # ----------------------------------------------------------------------
             # ----------------------------------------------------------------------
             # 处理被转发微博的条件操作
@@ -292,8 +299,9 @@ class FindQianGe(threading.Thread):
                         if each is weibo_user:
                             continue
                         self.attention_other_user(each)
+                print('\033[31m----------------成功操作该源微博--------------------\033[0m')
             # 随机暂停1~n秒
-            time.sleep(random.randint(1, 5))
+            time.sleep(random.randint(3, 5))
         self.driver.quit()
 
     pass
@@ -306,7 +314,8 @@ class FindQianGe(threading.Thread):
 
     pass
 
-    def award_run(self, username, index_number):
+    def award_run(self, username, index_number=0):
+        print('\033[33m-------------当前处理 @' + str(username) + ' 的微博主页---------------\033[0m')
         # 首先获取username的主页url
         # 初始化username
         user_name = '@' + username
@@ -351,6 +360,7 @@ class FindQianGe(threading.Thread):
         name = re.findall("fnick=(.*?)&", str(uid_info))[0]
         self.user_database_tools.save_data(uid, name)
         url = driver.current_url
+        print(url)
         # 创建新线程执行任务
         threading.Thread(target=self.find_weibo, args=(url, index_number)).start()
         driver.quit()

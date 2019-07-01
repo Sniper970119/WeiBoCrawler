@@ -1,18 +1,19 @@
 # -*- coding:utf-8 -*-
 import random
 import threading
+from tkinter import messagebox
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-
 from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
 from src.systemTools import HandleUserInDatabase
-from src.systemTools import HandleWeiBoInDatebase
+from src.systemTools import HandleWeiBoInDatabase
 from src.handleAwardWeiBo.tools import FindCondation
+from src.handleAwardWeiBo import StartAutoFind
 
 import urllib.parse
 import time
@@ -26,11 +27,11 @@ logging.basicConfig(level=config.LOGGING_LEVEL,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 
-
 class FindAwardWeiBo(threading.Thread):
     """
     常规搜索查找
     """
+
     def __init__(self, *args, **kwargs):
         # 对线程初始化
         super(FindAwardWeiBo, self).__init__(*args, **kwargs)
@@ -58,6 +59,11 @@ class FindAwardWeiBo(threading.Thread):
         # 构建URL
         url = 'https://s.weibo.com/weibo/' + keyword_change + '&xsort=hot&page=%s' % (str(pagenumber))
         self.driver.get(url)
+        try:
+            self.driver.get(url)
+        except:
+            messagebox.showinfo("提示", "登录超时，重新运行")
+            exit(0)
         text = self.driver.page_source
         # 生成bs4对象
         soup = BeautifulSoup(text, 'html5lib')
@@ -74,15 +80,20 @@ class FindAwardWeiBo(threading.Thread):
         for i in range(from_index, len(weibo_list)):
             forword = False
             index_id = i + 1
-            print('-------------当前处理第'+str(pagenumber)+'页的第' + str(i + 1) + '条微博---------------')
+            print('\033[32m-------------当前处理第' + str(pagenumber) + '页的第' + str(i + 1) + '条微博---------------\033[0m')
+            print('\033[32m------------- 点赞：'+str(condition[i]['need_zan'])+' 关注：'+str(condition[i]['need_attention'])+' 转发：'+str(condition[i]['need_forward'])+'---------------\033[0m')
             # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
             if condition[i]['need_zan'] == '1' or condition[i]['need_attention'] == '1' or condition[i][
                 'need_forward'] == '1':
                 # 判断是否被操作
-                if HandleWeiBoInDatebase.HandleUserInDatabase().if_have_data_and_save_it(weibo_list[i]):
+                if HandleWeiBoInDatabase.HandleWeiboInDatabase().if_have_data_and_save_it(weibo_list[i]):
+                    print('\033[32m---------------已经操作过该条微博-------------------\033[0m')
+                    print()
                     continue
                 pass
             else:
+                print('\033[32m---------------该条微博不需要被操作-------------------\033[0m')
+                print()
                 continue
             # 处理点赞
             if condition[i]['need_zan'] == '1':
@@ -150,7 +161,9 @@ class FindAwardWeiBo(threading.Thread):
             # 将该微博保存到数据库
             # HandleWeiBoInDatebase.HandleUserInDatabase().save_data(weibo_list[i])
             # 随机暂停1~n秒
-            time.sleep(random.randint(1, 5))
+            print('\033[31m----------------成功操作该条微博--------------------\033[0m')
+            print()
+            time.sleep(random.randint(3, 5))
             pass
         self.driver.quit()
         pass
@@ -262,6 +275,5 @@ class FindAwardWeiBo(threading.Thread):
         :return:
         """
         for i in range(from_page, 5):
-            print('page:' + str(i))
+            print('\033[33m--------------------开始搜索第'+str(i)+'页--------------------\033[0m')
             self.find_one_page(i, index_number)
-

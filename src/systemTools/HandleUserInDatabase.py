@@ -24,7 +24,7 @@ class HandleUserInDatabase(object):
         # 检查是否有重复,这里调用前应该检查的，但是重复检查以防出错
         try:
             if len(self.mycol.find_one({"uid": uid})) > 0:
-                logging.error('repeat uid')
+                logging.warning('repeat uid')
                 return
         except:
             self.mycol.insert(
@@ -39,3 +39,10 @@ class HandleUserInDatabase(object):
         if len(self.mycol.find_one({"uid": uid})) > 0:
             return True
         return False
+
+    def get_total(self):
+        """
+        返回总共个数
+        :return:
+        """
+        return self.mycol.find().count()

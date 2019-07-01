@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+from tkinter import messagebox
+
 import time
 import os
 import pickle
@@ -37,6 +39,10 @@ class GetCookies(object):
         登录操作，获取cookies
         :return:
         """
+        print('\033[33m--------------需要进行登录，请尽快完成----------------\033[0m')
+        print('\033[33m--------------帐号密码登录请在30秒内完成--------------\033[0m')
+        print('\033[33m--------------第三方（QQ）登录请在10秒内完成----------\033[0m')
+
         self.driver.get('https://s.weibo.com')
         # 获取登录按钮
         login_button = self.wait.until(
@@ -56,10 +62,14 @@ class GetCookies(object):
             self.driver.switch_to.window(windows[0])
         # 最大化窗口 寻找登录标记
         self.driver.maximize_window()
-        # 登录检查,这里给最多再给30秒用来进行登录，这里作为输入用户名和密码的等待，第三方登录最多允许10秒
-        WebDriverWait(self.driver, timeout=30).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_name')))
-        logging.info('user has been login')
+        try:
+            # 登录检查,这里给最多再给30秒用来进行登录，这里作为输入用户名和密码的等待，第三方登录最多允许10秒
+            WebDriverWait(self.driver, timeout=30).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_name')))
+            logging.info('user has been login')
+        except:
+            messagebox.showinfo("提示", "登录超时，重新运行")
+            exit(0)
         # 获取用户当前cookies
         cookies = self.driver.get_cookies()
         # 将cookies写入文件
