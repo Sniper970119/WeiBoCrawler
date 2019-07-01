@@ -12,7 +12,7 @@ from src.loginWeiBo import GetCookies
 from src.systemTools import LoginWithCookies
 from src.systemTools import HandleUserInDatabase
 from src.systemTools import HandleWeiBoInDatebase
-from src.handleAwardWeiBo import FindCondation
+from src.handleAwardWeiBo.tools import FindCondation
 
 import urllib.parse
 import time
@@ -69,14 +69,14 @@ class FindAwardWeiBo(threading.Thread):
         for i in get_info:
             weibo_main_body.append(str(i))
         # 获取当前页微博简单处理后的抽奖要求
-        condation = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
+        condition = FindCondation.FindCondation().find_condation(weibo_list, weibo_main_body)
         # 处理当前页的微博
         for i in range(from_index, len(weibo_list)):
             forword = False
             index_id = i + 1
-            print(index_id)
+            print('-------------当前处理第'+str(pagenumber)+'页的第' + str(i + 1) + '条微博---------------')
             # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
-            if condation[i]['need_zan'] == '1' or condation[i]['need_attention'] == '1' or condation[i][
+            if condition[i]['need_zan'] == '1' or condition[i]['need_attention'] == '1' or condition[i][
                 'need_forward'] == '1':
                 # 判断是否被操作
                 if HandleWeiBoInDatebase.HandleUserInDatabase().if_have_data_and_save_it(weibo_list[i]):
@@ -85,7 +85,7 @@ class FindAwardWeiBo(threading.Thread):
             else:
                 continue
             # 处理点赞
-            if condation[i]['need_zan'] == '1':
+            if condition[i]['need_zan'] == '1':
                 # 关注, 只执行（判断）一次
                 if forword is False:
                     self.attention_user(index_id, pagenumber)
@@ -100,14 +100,14 @@ class FindAwardWeiBo(threading.Thread):
                 like_button.click()
 
             # 处理关注
-            if condation[i]['need_attention'] == '1':
+            if condition[i]['need_attention'] == '1':
                 # 关注, 只执行一次
                 if forword is False:
                     self.attention_user(index_id, pagenumber)
                     forword = True
 
             # 处理转发
-            if condation[i]['need_forward'] == '1':
+            if condition[i]['need_forward'] == '1':
                 # 关注, 只执行一次
                 if forword is False:
                     self.attention_user(index_id, pagenumber)
@@ -115,6 +115,7 @@ class FindAwardWeiBo(threading.Thread):
                 # 获取转发按钮,
                 css_forward = '#pl_feedlist_index > div:nth-child(2) > div:nth-child(' + str(
                     index_id) + ') > div:nth-child(1) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'
+
                 forward_button = self.wait.until(
                     EC.element_to_be_clickable(
                         (By.CSS_SELECTOR, css_forward)))
@@ -129,7 +130,7 @@ class FindAwardWeiBo(threading.Thread):
                 # 随机转发文本
                 forward_text = ''.join(random.sample('0123456789', 6))
                 # 如果需要at好友
-                if condation[i]['need_at_friend'] == '1':
+                if condition[i]['need_at_friend'] == '1':
                     forward_text = '@' + self.friend_1 + '  @' + self.friend_2 + '    ' + forward_text
                 forward_input_text.send_keys(forward_text)
                 # 获取转发按钮
@@ -142,8 +143,8 @@ class FindAwardWeiBo(threading.Thread):
                 time.sleep(random.randint(1, 3))
 
             # 处理转发微博中的其他关注
-            if len(condation[i]['attention_list']) > 0:
-                for each in condation[i]['attention_list']:
+            if len(condition[i]['attention_list']) > 0:
+                for each in condition[i]['attention_list']:
                     self.attention_other_user(each)
                 pass
             # 将该微博保存到数据库
@@ -263,3 +264,4 @@ class FindAwardWeiBo(threading.Thread):
         for i in range(from_page, 5):
             print('page:' + str(i))
             self.find_one_page(i, index_number)
+

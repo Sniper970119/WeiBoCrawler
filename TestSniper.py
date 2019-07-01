@@ -28,9 +28,9 @@ if __name__ == '__main__':
     """
     测试单独用户的查找转发
     """
-    from src.handleAwardWeiBo.customFind import FindQianGe
+    from src.handleAwardWeiBo.customFind import FindSingle
 
-    threading.Thread(target=FindQianGe.FindQianGe().find_weibo()).start()
+    threading.Thread(target=FindSingle.FindQianGe().find_weibo()).start()
 
 
     """
