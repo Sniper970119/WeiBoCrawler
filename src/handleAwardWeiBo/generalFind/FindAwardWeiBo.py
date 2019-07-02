@@ -92,7 +92,7 @@ class FindAwardWeiBo(threading.Thread):
                     continue
                 pass
             else:
-                print('\033[32m---------------该条微博不需要被操作-------------------\033[0m')
+                print('\033[32m---------------该条微博不需要被操作------------------\033[0m')
                 print()
                 continue
             # 处理点赞
@@ -274,6 +274,7 @@ class FindAwardWeiBo(threading.Thread):
         运行程序
         :return:
         """
-        for i in range(from_page, 5):
+        for i in range(from_page, 6):
             print('\033[33m--------------------开始搜索第'+str(i)+'页--------------------\033[0m')
+            print()
             self.find_one_page(i, index_number)

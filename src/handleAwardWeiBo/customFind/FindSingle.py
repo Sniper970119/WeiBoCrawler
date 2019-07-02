@@ -52,10 +52,10 @@ class FindSingle(threading.Thread):
         :return:
         """
         # 初始化已经带cookies的测试驱动
-        self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
+        # self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
-        self.driver.get(url)
+        # self.driver.get(url)
         # 停留2秒作为页面刷新时间
         time.sleep(2)
         text = self.driver.page_source
@@ -103,9 +103,13 @@ class FindSingle(threading.Thread):
         forwarded_condition = FindCondation.FindCondation().find_condation(weibo_mid, weibo_forwarded_context)
         # 遍历每个微博，处理当前微博condition
         for i in range(index_number, len(weibo_mid)):
-            print('\033[32m-------------当前处理 @' + str(weibo_user) + ' 的第' + str(i + 1) + '条微博--------------\033[0m')
-            print('\033[32m------------- 点赞：'+str(current_condition[i]['need_zan'])+' 关注：'+str(current_condition[i]['need_attention'])+' 转发：'+str(current_condition[i]['need_forward'])+'---------------\033[0m')
-            print('\033[32m------------- 点赞：'+str(forwarded_condition[i]['need_zan'])+' 关注：'+str(forwarded_condition[i]['need_attention'])+' 转发：'+str(forwarded_condition[i]['need_forward'])+'---------------\033[0m')
+            print('\033[32m------------当前处理 @' + str(weibo_user) + ' 的第' + str(i + 1) + '条微博-------------\033[0m')
+            print('\033[32m------------- 点赞：' + str(current_condition[i]['need_zan']) + ' 关注：' + str(
+                current_condition[i]['need_attention']) + ' 转发：' + str(
+                current_condition[i]['need_forward']) + '---------------\033[0m')
+            print('\033[32m------------- 点赞：' + str(forwarded_condition[i]['need_zan']) + ' 关注：' + str(
+                forwarded_condition[i]['need_attention']) + ' 转发：' + str(
+                forwarded_condition[i]['need_forward']) + '---------------\033[0m')
             # 主页微博索引从2开始
             index_id = i + 2
             sub_text = str(get_weibo[i])
@@ -118,15 +122,16 @@ class FindSingle(threading.Thread):
             # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
             if current_condition[i]['need_zan'] == '1' or current_condition[i]['need_attention'] == '1' or \
                     current_condition[i][
-                        'need_forward'] == '1':
+                        'need_forward'] == '1' or forwarded_condition['need_zan'] == '1' or forwarded_condition[
+                'need_attention'] == '1' or forwarded_condition['need_forward'] == '1':
                 # 判断是否被操作
                 if HandleWeiBoInDatabase.HandleWeiboInDatabase().if_have_data_and_save_it(weibo_mid[i]):
-                    print('\033[32m---------------已经操作过该条微博-------------------\033[0m')
+                    print('\033[32m---------------已经操作过该条微博------------------\033[0m')
                     print()
                     continue
                 pass
             else:
-                print('\033[32m---------------该条微博不需要被操作-------------------\033[0m')
+                print('\033[32m---------------该条微博不需要被操作-----------------\033[0m')
                 print()
                 continue
             # ----------------------------------------------------------------------
@@ -179,7 +184,7 @@ class FindSingle(threading.Thread):
                     logging.info('like button has been found')
                     like_button.click()
                 except:
-                    threading.Thread(target=self.find_weibo, args=(url, index_number - 2)).start()
+                    threading.Thread(target=self.find_weibo, args=(url, index_id - 2)).start()
                     logging.info('create new threading')
                     self.driver.quit()
                     logging.info('old thread alive')
@@ -282,7 +287,7 @@ class FindSingle(threading.Thread):
                         logging.info('like button has been found')
                         like_button.click()
                     except:
-                        threading.Thread(target=self.find_weibo, args=(url, index_number - 2)).start()
+                        threading.Thread(target=self.find_weibo, args=(url, index_id - 2)).start()
                         logging.info('create new threading')
                         self.driver.quit()
                         logging.info('old thread alive')
@@ -300,6 +305,7 @@ class FindSingle(threading.Thread):
                             continue
                         self.attention_other_user(each)
                 print('\033[31m----------------成功操作该源微博--------------------\033[0m')
+            print()
             # 随机暂停1~n秒
             time.sleep(random.randint(3, 5))
         self.driver.quit()
@@ -360,10 +366,10 @@ class FindSingle(threading.Thread):
         name = re.findall("fnick=(.*?)&", str(uid_info))[0]
         self.user_database_tools.save_data(uid, name)
         url = driver.current_url
-        print(url)
-        # 创建新线程执行任务
-        threading.Thread(target=self.find_weibo, args=(url, index_number)).start()
-        driver.quit()
+        # 执行任务
+        self.find_weibo(url, index_number)
+        self.driver = driver
+        # driver.quit()
         pass
 
     def attention_other_user(self, user_name):
