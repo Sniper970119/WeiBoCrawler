@@ -52,10 +52,10 @@ class FindSingle(threading.Thread):
         :return:
         """
         # 初始化已经带cookies的测试驱动
-        # self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
+        self.driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
-        # self.driver.get(url)
+        self.driver.get(url)
         # 停留2秒作为页面刷新时间
         time.sleep(2)
         text = self.driver.page_source
@@ -107,9 +107,7 @@ class FindSingle(threading.Thread):
             print('\033[32m------------- 点赞：' + str(current_condition[i]['need_zan']) + ' 关注：' + str(
                 current_condition[i]['need_attention']) + ' 转发：' + str(
                 current_condition[i]['need_forward']) + '---------------\033[0m')
-            print('\033[32m------------- 点赞：' + str(forwarded_condition[i]['need_zan']) + ' 关注：' + str(
-                forwarded_condition[i]['need_attention']) + ' 转发：' + str(
-                forwarded_condition[i]['need_forward']) + '---------------\033[0m')
+
             # 主页微博索引从2开始
             index_id = i + 2
             sub_text = str(get_weibo[i])
@@ -120,10 +118,9 @@ class FindSingle(threading.Thread):
             if forward_user is weibo_user:
                 continue
             # 判断该微博是否被操作过，如果没有，执行操作并保存数据库，如果操作过，放弃此趟
-            if current_condition[i]['need_zan'] == '1' or current_condition[i]['need_attention'] == '1' or \
-                    current_condition[i][
-                        'need_forward'] == '1' or forwarded_condition['need_zan'] == '1' or forwarded_condition[
-                'need_attention'] == '1' or forwarded_condition['need_forward'] == '1':
+            if current_condition[i]['need_zan'] == '1' or current_condition[i]['need_forward'] == '1' or \
+                    current_condition[i]['need_attention'] == '1' or forwarded_condition[i]['need_zan'] == '1' or \
+                    forwarded_condition[i]['need_forward'] == '1' or forwarded_condition[i]['need_attention'] == '1':
                 # 判断是否被操作
                 if HandleWeiBoInDatabase.HandleWeiboInDatabase().if_have_data_and_save_it(weibo_mid[i]):
                     print('\033[32m---------------已经操作过该条微博------------------\033[0m')
@@ -134,17 +131,22 @@ class FindSingle(threading.Thread):
                 print('\033[32m---------------该条微博不需要被操作-----------------\033[0m')
                 print()
                 continue
+            # 处理如果是抽奖结果的微博（以有“恭喜@”为标记）
+            ignore_flag = re.findall('恭喜.*?@', weibo_context[i])
+            if len(ignore_flag) > 0:
+                print('\033[32m----------该条微博为中奖微博，不需要被操作------------\033[0m')
+                continue
             # ----------------------------------------------------------------------
             # ----------------------------------------------------------------------
             # 处理当前微博的条件操作
             # ----------------------------------------------------------------------
             # ----------------------------------------------------------------------
             # 处理转发  将转发放到最前，以方便对转发失败进行异常捕获
-            if current_condition[i]['need_forward'] == '1':
+            if current_condition[i]['need_forward'] == '1' or forwarded_condition[i]['need_forward'] == '1':
                 # 获取转发按钮,
-
-                css_forward = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
-                    index_id) + ') > div.WB_feed_handle > div > ul > li:nth-child(2) > a'
+                # ' + str(index_id) + '
+                css_forward = 'div.WB_cardwrap:nth-child(' + str(
+                    index_id) + ') > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'
                 forward_button = self.wait.until(
                     EC.element_to_be_clickable(
                         (By.CSS_SELECTOR, css_forward)))
@@ -175,9 +177,9 @@ class FindSingle(threading.Thread):
             # 处理点赞  同时对转发中的异常进行捕获
             if current_condition[i]['need_zan'] == '1':
                 try:
-                    # 获取点赞按钮,
-                    css_like = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
-                        index_id) + ') > div.WB_feed_handle > div > ul > li:nth-child(4) > a'
+                    # 获取点赞按钮, ' + str(index_id) + '
+                    css_like = 'div.WB_cardwrap:nth-child(' + str(
+                        index_id) + ') > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(4) > a:nth-child(1)'
                     like_button = self.wait.until(
                         EC.element_to_be_clickable(
                             (By.CSS_SELECTOR, css_like)))
@@ -210,77 +212,16 @@ class FindSingle(threading.Thread):
             # ----------------------------------------------------------------------
             # ----------------------------------------------------------------------
             if forwarded_user[i] is not '':
-                # 处理转发
-                if forwarded_condition[i]['need_forward'] == '1':
-                    # ----------------------------------------------------------------------
-                    # ----------------这里由于点击子转发跳转新页面,就转原微博-----------------
-                    # ----------------------------------------------------------------------
-                    # # 获取转发按钮,
-                    # css_forward = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
-                    #     index_id) + ') > div.WB_feed_detail.clearfix > div.WB_detail > div.WB_feed_expand > div.WB_expand.S_bg1 > div.WB_func.clearfix > div.WB_handle.W_fr > ul > li:nth-child(1) > span > a'
-                    # forward_button = self.wait.until(
-                    #     EC.element_to_be_clickable(
-                    #         (By.CSS_SELECTOR, css_forward)))
-                    # logging.info('forward button has been found')
-                    # forward_button.click()
-                    # # 获取转发输入
-                    # forward_input_text = self.wait.until(
-                    #     EC.element_to_be_clickable(
-                    #         (By.CSS_SELECTOR,
-                    #          'body > div.m-layer > div.inner > div > div:nth-child(2) > div > div.func > div > div.input > textarea')))
-                    # logging.info('forward input text has been found')
-                    # # 随机转发文本
-                    # forward_text = ''.join(random.sample('0123456789', 6))
-                    # # 如果需要at好友
-                    # if forwarded_condition[i]['need_at_friend'] == '1':
-                    #     forward_text = '@' + self.friend_1 + '  @' + self.friend_2 + '    ' + forward_text
-                    # forward_input_text.send_keys(forward_text)
-                    # # 获取转发按钮
-                    # forward_input_button = self.wait.until(
-                    #     EC.element_to_be_clickable(
-                    #         (By.CSS_SELECTOR,
-                    #          '.s-btn-g')))
-                    # logging.info('forward input button has been found')
-                    # forward_input_button.click()
-                    # ----------------------------------------------------------------------
-                    # ----------------这里由于点击子转发跳转新页面,就转原微博-----------------
-                    # ----------------------------------------------------------------------
-                    # 获取转发按钮,
-                    css_forward = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
-                        index_id) + ') > div.WB_feed_handle > div > ul > li:nth-child(2) > a'
-                    forward_button = self.wait.until(
-                        EC.element_to_be_clickable(
-                            (By.CSS_SELECTOR, css_forward)))
-                    logging.info('forward button has been found')
-                    forward_button.click()
-                    time.sleep(1)
-                    # 获取转发输入
-                    forward_input_text = self.wait.until(
-                        EC.element_to_be_clickable(
-                            (By.CSS_SELECTOR,
-                             '.p_textarea > textarea:nth-child(1)')))
-                    logging.info('forward input text has been found')
-                    # 随机转发文本
-                    forward_text = ''.join(random.sample('0123456789', 6))
-                    # 如果需要at好友
-                    if current_condition[i]['need_at_friend'] == '1':
-                        forward_text = '@' + self.friend_1 + '  @' + self.friend_2 + '    ' + forward_text
-                    forward_input_text.send_keys(forward_text)
-                    # 获取转发按钮
-                    forward_input_button = self.wait.until(
-                        EC.element_to_be_clickable(
-                            (By.CSS_SELECTOR,
-                             'a.W_btn_a:nth-child(2)')))
-                    logging.info('forward input button has been found')
-                    forward_input_button.click()
-                    time.sleep(random.randint(1, 3))
+                print('\033[32m------------- 点赞：' + str(forwarded_condition[i]['need_zan']) + ' 关注：' + str(
+                    forwarded_condition[i]['need_attention']) + ' 转发：' + str(
+                    forwarded_condition[i]['need_forward']) + '---------------\033[0m')
 
                 # 处理点赞
                 if forwarded_condition[i]['need_zan'] == '1':
                     try:
                         # 获取点赞按钮,
-                        css_like = '#Pl_Official_MyProfileFeed__20 > div > div:nth-child(' + str(
-                            index_id) + ') > div.WB_feed_detail.clearfix > div.WB_detail > div.WB_feed_expand > div.WB_expand.S_bg1 > div.WB_func.clearfix > div.WB_handle.W_fr > ul > li:nth-child(3) > span > a'
+                        css_like = 'div.WB_cardwrap:nth-child(3) > div:nth-child(1) > div:nth-child(' + str(
+                            index_id) + ') > div:nth-child(5) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3) > span:nth-child(1) > a:nth-child(1)'
                         like_button = self.wait.until(
                             EC.element_to_be_clickable(
                                 (By.CSS_SELECTOR, css_like)))
@@ -365,11 +306,13 @@ class FindSingle(threading.Thread):
         uid = re.findall("uid=(.*?)&", str(uid_info))[0]
         name = re.findall("fnick=(.*?)&", str(uid_info))[0]
         self.user_database_tools.save_data(uid, name)
-        url = driver.current_url
+        url = str(driver.current_url)
+        # 替换链接中的is_all 变成 is_hot  标准化操作
+        url = url.replace('all', 'hot')
         # 执行任务
         self.find_weibo(url, index_number)
         self.driver = driver
-        # driver.quit()
+        driver.quit()
         pass
 
     def attention_other_user(self, user_name):

@@ -225,9 +225,6 @@ class FindAwardWeiBo(threading.Thread):
         driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
         wait = WebDriverWait(driver, timeout=10)
-        # 关键字编码
-        keyword_change = urllib.parse.quote_plus('抽奖')
-        keyword_change = urllib.parse.quote_plus(keyword_change)
         # 构建URL
         url = 'https://s.weibo.com/weibo/' + user_name
         driver.get(url)
@@ -258,7 +255,7 @@ class FindAwardWeiBo(threading.Thread):
                  '#Pl_Official_Headerv6__1 > div.PCD_header > div > div.shadow > div.pf_opt > div > div:nth-child(1) > a:nth-child(1)')))
         logging.info('attention button has been found')
         attention_button.click()
-        time.sleep(1)
+        time.sleep(2)
         text = driver.page_source
         soup = BeautifulSoup(text, 'html5lib')
         # 使用bs4 获取uid附近的字符
