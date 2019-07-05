@@ -20,8 +20,8 @@ class StartAutoFind(object):
         self.init_user = HandleUserInDatabase.HandleUserInDatabase().get_total()
         self.init_weibo = HandleWeiBoInDatabase.HandleWeiboInDatabase().get_total()
         # 开始通用搜索，启动单独的线程
-        print('\033[33m------------------开始执行通用搜索-------------------\033[0m')
-        # FindAwardWeiBo.FindAwardWeiBo().award_run()
+        # print('\033[33m------------------开始执行通用搜索-------------------\033[0m')
+        FindAwardWeiBo.FindAwardWeiBo().award_run()
         # 读取文件中需要定制查找的用户
         user_list = ReadFileToList.ReadFileInList().read_file('./target_user.txt')
         # 遍历这些用户 进行定制化搜索，不启用单独的线程  在主线程下依次完成
