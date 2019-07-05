@@ -11,8 +11,8 @@ logging.basicConfig(level=config.LOGGING_LEVEL,
 
 class HandleUserInDatabase(object):
     def __init__(self):
-        myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        mydb = myclient["WeiboAward"]
+        myclient = pymongo.MongoClient(config.DATABASE_ADDRESS)
+        mydb = myclient[config.DATABASE_NAME]
         self.mycol = mydb["User"]
 
     def save_data(self, uid, name):

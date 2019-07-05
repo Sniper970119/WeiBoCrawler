@@ -322,7 +322,7 @@ class FindSingle(threading.Thread):
         :return:
         """
         # 初始化username
-        user_name = '@' + user_name
+        user_name = user_name
         # 初始化已经带cookies的测试驱动
         driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
