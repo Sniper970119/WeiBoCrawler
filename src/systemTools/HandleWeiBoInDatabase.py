@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+import configparser
+
 import pymongo
 import time
 
@@ -11,8 +13,12 @@ logging.basicConfig(level=config.LOGGING_LEVEL,
 
 class HandleWeiboInDatabase(object):
     def __init__(self):
-        myclient = pymongo.MongoClient(config.DATABASE_ADDRESS)
-        mydb = myclient[config.DATABASE_NAME]
+        cf = configparser.ConfigParser()
+        cf.read('./database.ini', encoding='utf-8')
+        address = cf.get('DATABASE', 'address')
+        name = cf.get('DATABASE', 'name')
+        myclient = pymongo.MongoClient(address)
+        mydb = myclient[name]
         self.mycol = mydb["Weibo"]
 
     def save_data(self, mid):

@@ -18,9 +18,15 @@ from src.loginWeiBo import GetCookies
 
 
 class LoginWithCookies(object):
-    def __init__(self, executable_path="./driver/win/chromedriver.exe"):
-        # 初始化自动测试驱动
-        self.driver = webdriver.Chrome(executable_path=executable_path)
+    def __init__(self, executable_path="./driver/win/"):
+        try:
+            executable_path_1 = executable_path + 'chromedriver.exe'
+            # 初始化自动测试驱动
+            self.driver = webdriver.Chrome(executable_path=executable_path_1)
+        except:
+            executable_path_2 = executable_path + 'geckodriver.exe'
+            # 初始化自动测试驱动
+            self.driver = webdriver.Firefox(executable_path=executable_path_2)
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
         pass

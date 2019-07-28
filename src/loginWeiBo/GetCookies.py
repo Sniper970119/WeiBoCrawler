@@ -21,9 +21,15 @@ class GetCookies(object):
     执行登录操作
     """
 
-    def __init__(self, executable_path="./driver/win/chromedriver.exe"):
-        # 初始化自动测试驱动
-        self.driver = webdriver.Chrome(executable_path=executable_path)
+    def __init__(self, executable_path="./driver/win/"):
+        try:
+            executable_path_1 = executable_path + 'chromedriver.exe'
+            # 初始化自动测试驱动
+            self.driver = webdriver.Chrome(executable_path=executable_path_1)
+        except:
+            executable_path_2 = executable_path + 'geckodriver.exe'
+            # 初始化自动测试驱动
+            self.driver = webdriver.Firefox(executable_path=executable_path_2)
         # 初始化等待时间，10s
         self.wait = WebDriverWait(self.driver, timeout=10)
         # 查看是否有保存用户cookies，以判断使用哪种方式登录
@@ -43,14 +49,17 @@ class GetCookies(object):
         print('\033[33m--------------帐号密码登录请在30秒内完成--------------\033[0m')
         print('\033[33m--------------第三方（QQ）登录请在10秒内完成----------\033[0m')
 
-        self.driver.get('https://s.weibo.com')
+        self.driver.get('https://s.weibo.com/?display=0&retcode=6102#_loginLayer_1562581243968')
+        self.driver.maximize_window()
+        self.driver.refresh()
         # 获取登录按钮
         login_button = self.wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, '.gn_login_list > li:nth-child(3) > a:nth-child(1)')))
         logging.info('login button has been found')
+        time.sleep(1)
         login_button.click()
         # 停留10秒，作为用户输入用户名的停留（其实主要是因为要留第三方登录的刷新时间）
-        time.sleep(10)
+        time.sleep(20)
         windows = self.driver.window_handles
         # 如果用户选择了第三方登录，会弹出新的选项卡来登录，那就需要刷新和切换选项卡以寻找标记
         if len(windows) > 1:

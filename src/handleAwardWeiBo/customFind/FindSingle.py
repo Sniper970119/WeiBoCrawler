@@ -265,7 +265,7 @@ class FindSingle(threading.Thread):
         print('\033[33m-------------当前处理 @' + str(username) + ' 的微博主页---------------\033[0m')
         # 首先获取username的主页url
         # 初始化username
-        user_name = '@' + username
+        user_name = username
         # 初始化已经带cookies的测试驱动
         driver = LoginWithCookies.LoginWithCookies().login_with_cookie()
         # 初始化等待时间，10s
